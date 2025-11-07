@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Log in to GitHub Container Registry
+      # 2️⃣ Log in to GHCR
       - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u monis121hassan --password-stdin
 
@@ -34,7 +34,7 @@ jobs:
         run: |
           sed -i "s#ghcr.io/.*/flask-k8s:.*#ghcr.io/monis121hassan/flask-k8s:${{ github.run_number }}#g" k8s/deployment.yaml
 
-      # 6️⃣ Commit and push changes safely using GITHUB_TOKEN
+      # 6️⃣ Commit and push deployment.yaml changes using GITHUB_TOKEN
       - name: Commit and push deployment.yaml changes
         run: |
           git config --global user.name "github-actions[bot]"
