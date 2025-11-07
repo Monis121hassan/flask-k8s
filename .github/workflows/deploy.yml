@@ -7,24 +7,39 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # required for committing back
+      packages: write  # required for pushing GHCR images
+
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
+      # 2️⃣ Log in to GitHub Container Registry
+      - name: Log in to GHCR
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u monis121hassan --password-stdin
 
+      # 3️⃣ Build Docker image
       - name: Build Docker image
         run: docker build -t ghcr.io/monis121hassan/flask-k8s:${{ github.run_number }} .
 
+      # 4️⃣ Push Docker image
       - name: Push Docker image
         run: docker push ghcr.io/monis121hassan/flask-k8s:${{ github.run_number }}
 
+      # 5️⃣ Update K8s deployment.yaml image tag
       - name: Update K8s manifest image tag
         run: |
           sed -i "s#ghcr.io/.*/flask-k8s:.*#ghcr.io/monis121hassan/flask-k8s:${{ github.run_number }}#g" k8s/deployment.yaml
-          git config --global user.name "monis121hassan"
-          git config --global user.email "monis121hassan@users.noreply.github.com"
+
+      # 6️⃣ Commit and push changes safely using GITHUB_TOKEN
+      - name: Commit and push deployment.yaml changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add k8s/deployment.yaml
-          git commit -m "Updated image tag to ${{ github.run_number }}"
-          git push
+          git commit -m "Updated image tag to ${{ github.run_number }}" || echo "No changes to commit"
+          git push origin main
