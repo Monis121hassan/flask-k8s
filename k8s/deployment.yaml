@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask-k8s
-        image: ghcr.io/monis121hassan/flask-k8s:11
+        image: ghcr.io/monis121hassan/flask-k8s:12
         ports:
           - containerPort: 5000
       imagePullSecrets:
